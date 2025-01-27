@@ -20,10 +20,10 @@ export const AppProvider = ({ children }) => {
       console.log("URL:", `${VITE_BACKEND_URL}/login`);
       console.log("Payload:", { email, password });
   
-      const response = await axios.post(`${VITE_BACKEND_URL}/login`, { email, password });
+      const response = await axios.post(`${VITE_BACKEND_URL}/user/login`, { email, password });
       setUserData(response.data); // Set user data
       console.log("User logged in:", response.data);
-  
+     toast.success("user login")
       navigate("/home"); // Redirect to home page
     } catch (error) {
       console.error("Login failed:", error);

@@ -43,6 +43,7 @@ import Login from "./Componnent/Login"; // Login component import
 import Home from "./Componnent/Home"; // Home component import
 import { AppProvider } from "./context/AppContext"; // Import AppProvider
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -68,6 +69,7 @@ const App = () => {
     <AppProvider>
         <div className="min-h-screen transition-colors duration-300 flex flex-col items-center justify-center relative">
           {/* Dark/Light Mode Toggle Button with Label */}
+         <ToastContainer/>
           <div className="absolute top-4 right-4 flex items-center space-x-2">
             {/* Label */}
             <span
