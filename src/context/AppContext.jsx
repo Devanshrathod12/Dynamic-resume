@@ -23,21 +23,28 @@ export const AppProvider = ({ children }) => {
   // 1️⃣ **Login API**
   const loginUser = async (email, password) => {
     try {
+        const { data } = await axios.post(
+            `${VITE_BACKEND_URL}/user/login`,
+            { email, password },
+            { headers: { "Content-Type": "application/json" } }
+        );
 
-      const {data} = await axios.post(`${VITE_BACKEND_URL}/user/login`,{email,password},{headers:{"Content-Type": "application/json"}})
-
-      if (data.success) {
-        setUserData(data.data);
-        toast.success("Login Successful!");
-        console.log("User logged in:",data.success);
-      } else {
-        toast.error(data.message || "Login failed");
-      }
+        if (data.success) {
+            setUserData(data.data);
+            toast.success("Login Successful!");
+            console.log("User logged in:", data.success);
+            return data; // ✅ Function को return करना जरूरी है
+        } else {
+            toast.error(data.message || "Login failed");
+            return null; // ❌ Error होने पर भी कुछ return करना जरूरी है
+        }
     } catch (error) {
-      toast.error(data.message || "Something went wrong");
-      console.error("Login failed:", error.message);
+        toast.error("Something went wrong");
+        console.error("Login failed:", error.message);
+        return null; // ✅ Catch block में भी return जरूरी है
     }
-  }
+};
+
   
   // 2️⃣ **Signup API**
   const signupUser = async (name, email, password) => {
@@ -77,7 +84,7 @@ export const AppProvider = ({ children }) => {
       
   
       if (response.data.success) {
-        toast.success("OTP Verified Successfully!");
+        toast.success(" OTP Verified Successfully!");
         return response.data;
       } else {
         toast.error(response.data.message || "OTP Verification Failed");
@@ -89,7 +96,7 @@ export const AppProvider = ({ children }) => {
   };
   
   // 4️⃣ **Forget Password API**
-  const forgetPassword = async (email) => {
+  const forgetPassword = async (email) => {    // forger password me ye wali cal rhi hai
     try {
       const response = await axios.post(
         `${VITE_BACKEND_URL}/user/forget-password`,
@@ -111,32 +118,29 @@ export const AppProvider = ({ children }) => {
 
 
 
-  const verifyForgetPassword = async(email,otp) => {
-
+  const verifyForgetPassword = async (email, otp) => {
     try {
-      console.log(email,otp);
-      
-
-      const {data} = await axios.post(`${VITE_BACKEND_URL}/user/verify-forgetpassword`,{email,Otp:otp},  { headers: { "Content-Type": "application/json" }})
-
-      if(data.success){
-       
-          toast.success(data.message);
-          console.log(data.message);
-          return
-        } else {
-          toast.error(response.data.message || "Reset Failed");
-
-          return
-        }
-      
-
+      console.log(email, otp);
+      const { data } = await axios.post(
+        `${VITE_BACKEND_URL}/user/verify-forgetpassword`,
+        { email, Otp: otp },
+        { headers: { "Content-Type": "application/json" } }
+      );
+  
+      if (data.success) {
+        toast.success(data.message);
+        console.log(data.message);
+        return true; // Return true for successful OTP verification
+      } else {
+        toast.error(data.message || "Reset Failed");
+        return false; // Return false for failed OTP verification
+      }
     } catch (error) {
       console.log(error.message);
-      toast.error(error.message)
-      
+      toast.error(error.message);
+      return false; // Return false for any errors
     }
-  }
+  };
 
 
 
@@ -163,25 +167,62 @@ export const AppProvider = ({ children }) => {
   }
 
 
-const resetPassword = async(password,confirmPassword)=>{
+// const resetPassword = async(password,confirmPassword)=>{
+
+//   try {
+//     const {data} = await axios.put(`${VITE_BACKEND_URL}/user/update-password`,{email,password,confirmPassword},{headers:{"Content-Type":"application/json"}})
+  
+  
+//     if(data.success){
+//      toast.success(data.success)
+//     }
+//     else{
+//       toast.error(data.success)
+//     }
+  
+//   } catch (error) {
+//     console.log(error.message);
+    
+//   }
+// }
+
+
+
+const resetPassword = async (email, password, confirmPassword) => {
+  if (!email || !password || !confirmPassword) {
+    toast.error("All fields are required.");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    toast.error("Passwords do not match.");
+    return;
+  }
 
   try {
-    const {data} = await axios.put(`${VITE_BACKEND_URL}/user/update-password`,{email,password,confirmPassword},{headers:{"Content-Type":"application/json"}})
-  
-  
-    if(data.success){
-     toast.success(data.success)
-    }
-    else{
-      toast.error(data.success)
-    }
-  
-  } catch (error) {
-    console.log(error.message);
-    
-  }
-}
+    const { data } = await axios.put(
+      `${VITE_BACKEND_URL}/user/update-password`,
+      { email, password, confirmPassword },
+      { headers: { "Content-Type": "application/json" } }
+    );
 
+    if (data.success) {
+      toast.success(data.message || "Password updated successfully!");
+      return true;
+    } else {
+      toast.error(data.message || "An error occurred.");
+      return false;
+    }
+  } catch (error) {
+    if (error.response && error.response.data) {
+      toast.error(error.response.data.message || "An error occurred.");
+    } else {
+      toast.error("An unexpected error occurred.");
+    }
+    console.error(error.message);
+    return false;
+  }
+};
 
   return (
     <AppContext.Provider value={{ 

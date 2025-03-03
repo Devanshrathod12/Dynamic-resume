@@ -22,8 +22,8 @@ const VerifyOtp = () => {
       console.log("OTP Verify Response:", result);
 
       if (result?.success) {
-        toast.success("OTP Verified Successfully!");
-        navigate('/dashboard'); // Change this to the actual route
+        toast.success("OTP Verified  Successfully!");
+        navigate('/home'); // Change this to the actual route
       } else {
         toast.error(result?.message || "Invalid OTP. Please try again.");
       }

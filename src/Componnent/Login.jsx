@@ -1,57 +1,96 @@
 import React, { useState } from "react";
-import { useAppContext } from "../context/AppContext"; // Import the context to use API calls
-import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/AppContext";
+import { useNavigate } from "react-router-dom"
 
 const Login = () => {
   const [currState, setCurrState] = useState("Sign Up");
   const [isResetPassword, setIsResetPassword] = useState(false);
   const [isOtpVerification, setIsOtpVerification] = useState(false);
- 
+  const [isPasswordUpdate, setIsPasswordUpdate] = useState(false); // New state for password update
+  const [newPassword, setNewPassword] = useState(""); // New password state
+  const [confirmPassword, setConfirmPassword] = useState(""); // Confirm password state
 
   const navigate = useNavigate()
 
-  const { loginUser, signupUser, data, setData, forgetPassword,verifyForgetPassword,resendOtp } = useAppContext(); // Access API functions from context
+  const { loginUser, signupUser, data, setData, forgetPassword, verifyForgetPassword, resendOtp, resetPassword } = useAppContext();
 
   const onChangeHandler = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
+  };
+
+  const handleLogin = async () => {
+    const result = await loginUser(data.email, data.password);
+    console.log("Login Result:", result); // Debugging के लिए
+
+    if (result && result.success) {
+        navigate("/home");
+    } else {
+        console.log("Login Failed:", result?.message || "Unknown error");
+    }
+};
+
+
+
+  const handleSignUp = async () => {
+    const signupResult = await signupUser(data.name, data.email, data.password);
+    if (signupResult) {
+      navigate("/verify-otp");
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otpResult = await verifyForgetPassword(data.email, data.otp);
+    if (otpResult) {
+      setIsPasswordUpdate(true); // Show password update fields after OTP verification
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const result = await forgetPassword(data.email);
+    console.log("Reset Password Request:", result);
+    setIsOtpVerification(true);
+  };
+
+  const handleVerifyResetPassword = async () => {
+    console.log("Verify OTP and Reset Password:", data.otp);
+    try {
+      const result = await verifyForgetPassword(data.email, data.otp);
+      if (result) {
+        setIsPasswordUpdate(true); // Show password update fields after OTP verification
+      } else {
+        alert("OTP verification failed. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      alert("An error occurred while verifying OTP. Please try again.");
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    const result = await resetPassword(data.email, newPassword, confirmPassword);
+    if (result) {
+      navigate("/home");
+    }
   };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
     if (isResetPassword && !isOtpVerification) {
-      const result = await forgetPassword(data.email);
-
-      console.log("Reset Password Request:", result);
-
-      setIsOtpVerification(true);
+      await handleResetPassword();
     } else if (isResetPassword && isOtpVerification) {
-      console.log("Verify OTP and Reset Password:", data.otp);
-      const result  = await verifyForgetPassword(data.email,data.otp)
-     if(result){
-      navigate("/")
-     }
-      
-     
-
-      
+      await handleVerifyResetPassword();
     } else {
-      console.log(currState, data);
       if (currState === "Login") {
-        // Call the login API when Login button is clicked
-       const result = await loginUser(data.email, data.password);
-
-       if (result) {
-        navigate("/")
-       }
-
-       
+        await handleLogin();
       } else if (currState === "Sign Up") {
-        // Call the signup API when Sign Up button is clicked
-       const result = await signupUser(data.name, data.email, data.password);
-       if(result){
-        navigate("/verify-otp")
-       }
+        await handleSignUp();
+      } else if (currState === "Verify OTP") {
+        await handleVerifyOtp();
       }
     }
   };
@@ -144,41 +183,76 @@ const Login = () => {
               )}
             </>
           ) : isOtpVerification ? (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Verify OTP</h2>
-              </div>
-              <div className="space-y-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  We have sent an OTP to your email address. Enter the OTP below to reset your password.
+            isPasswordUpdate ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Update Password</h2>
+                </div>
+                <div className="space-y-4">
+                  <input
+                    name="newPassword"
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    value={newPassword}
+                    type="password"
+                    placeholder="New Password"
+                    className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                    required
+                  />
+                  <input
+                    name="confirmPassword"
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    value={confirmPassword}
+                    type="password"
+                    placeholder="Confirm Password"
+                    className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                    required
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePasswordUpdate}
+                  className="w-full bg-blue-500 text-white py-2 mt-4 rounded-md hover:bg-blue-600 transition"
+                >
+                  Update Password
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Verify OTP</h2>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    We have sent an OTP to your email address. Enter the OTP below to reset your password.
+                  </p>
+                  <input
+                    name="otp"
+                    onChange={onChangeHandler}
+                    value={data.otp}
+                    type="text"
+                    placeholder="Enter OTP"
+                    className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
+                    required
+                  />
+                </div>
+                <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 block">
+                  Don’t receive the OTP?{" "}
+                  <button className="text-blue-500 hover:underline font-medium">Resend OTP</button>
+                </span>
+                <p
+                  className="text-start text-sm mt-2 text-blue-500 cursor-pointer hover:underline"
+                  onClick={() => setIsOtpVerification(false)}
+                >
+                  Back to Reset Password
                 </p>
-                <input
-                  name="otp"
-                  onChange={onChangeHandler}
-                  value={data.otp}
-                  type="text"
-                  placeholder="Enter OTP"
-                  className="w-full px-3 py-2 border rounded-md outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-200"
-                  required
-                />
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400 mt-2 block">
-                Don’t receive the OTP?{" "}
-                <button className="text-blue-500 hover:underline font-medium">Resend OTP</button>
-              </span>
-              <p
-                className="text-start text-sm mt-2 text-blue-500 cursor-pointer hover:underline"
-                onClick={() => setIsOtpVerification(false)}
-              >
-                Back to Reset Password
-              </p>
-              <button
-                type="submit"
-                className="w-full bg-blue-500 text-white py-2 mt-4 rounded-md hover:bg-blue-600 transition"
-              >
-                Verify & Reset Password
-              </button>
-            </>
+                <button
+                  type="submit"
+                  className="w-full bg-blue-500 text-white py-2 mt-4 rounded-md hover:bg-blue-600 transition"
+                >
+                  Verify & Reset Password
+                </button>
+              </>
+            )
           ) : (
             <>
               <div className="flex justify-between items-center mb-4">

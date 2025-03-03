@@ -44,6 +44,7 @@ import Home from "./Componnent/Home"; // Home component import
 import { AppProvider } from "./context/AppContext"; // Import AppProvider
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import VerifyOtp from "../pages/VerifyOtp";
 
 const App = () => {
   const dispatch = useDispatch();
@@ -100,6 +101,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Login />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

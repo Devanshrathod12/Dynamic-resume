@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   userData: {}, // data yha pr store hoga
-  Dark:true    // by default dark hoga {ture} and light {false}
+  Dark:false    // by default dark hoga {ture} and light {false}
 };
 
 const userSlice = createSlice({
